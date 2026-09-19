@@ -1,0 +1,76 @@
+# Build trees
+build/
+build-*/
+out/
+cmake-build-*/
+_deps/
+
+# CMake artifacts
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Testing/
+install/
+*.cmake.stamp
+compile_commands.json
+
+# Visual Studio / MSVC
+.vs/
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.vcxproj.*
+*.pdb
+*.ilk
+*.obj
+*.idb
+*.exp
+*.lib
+*.exe
+*.dll
+*.dylib
+*.so
+*.a
+
+# Sanitizer / analyzer output
+*.san
+*.log
+clang-analyzer/
+*.plist
+
+# Crash dumps and debris
+*.dmp
+*.mdmp
+crash-*
+core
+core.*
+
+# Runtime scratch state produced by tools and tests
+scratch/
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python / tooling
+__pycache__/
+*.pyc
+.venv/
+
+# Benchmark and validation artifacts produced by local runs
+bench_result.json
+cluster_out.txt
+*-report.json
+*.efgj
+*.efgs
+*.efgs.tmp
