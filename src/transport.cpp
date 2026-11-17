@@ -429,8 +429,15 @@ StatusOr<TcpListener> TcpListener::bind_loopback(u16 port) {
         return last_socket_error("socket creation failed");
     }
     const int reuse = 1;
+#ifdef _WIN32
+    // SO_REUSEADDR on Windows lets a second socket bind a port that is still
+    // listening; exclusive use makes that second bind fail instead.
+    (void)setsockopt(socket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, reinterpret_cast<const char*>(&reuse),
+                     static_cast<int>(sizeof(reuse)));
+#else
     (void)setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&reuse),
                      static_cast<int>(sizeof(reuse)));
+#endif
 
     sockaddr_in address{};
     address.sin_family = AF_INET;

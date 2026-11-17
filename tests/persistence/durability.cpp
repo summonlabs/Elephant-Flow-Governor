@@ -5,9 +5,12 @@
 // The governing rule under test: durable state must not silently restore
 // liveness, telemetry freshness, publisher authority or hardware effect.
 
+#include <chrono>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "efg/efg.hpp"
@@ -461,4 +464,32 @@ EFG_TEST(persistence, the_journal_ceiling_refuses_rather_than_growing_without_bo
         journal.value().append(RecordType::FlowClassified, make_payload(1024, 1)).code(),
         StatusCode::Oversized);
     EFG_CHECK_STATUS_OK(journal.value().close());
+}
+
+EFG_TEST(persistence, a_snapshot_replacement_waits_for_a_reader_to_close) {
+    ScratchDirectory scratch("efg-snapshot-reader");
+    const std::filesystem::path path = scratch.file("snapshot.efgs");
+    const std::vector<std::byte> first = make_payload(64, 1);
+    const std::vector<std::byte> second = make_payload(64, 2);
+    EFG_REQUIRE(SnapshotFile::write_atomic(path, first).ok());
+    bool reader_opened = false;
+    bool written = false;
+    {
+        // Another tool reading the store (an inspection, a scan) holds the
+        // snapshot open while it is replaced, and closes it shortly after.
+        std::ifstream reader(path, std::ios::binary);
+        reader_opened = reader.is_open();
+        std::thread writer([&path, &second, &written] {
+            written = SnapshotFile::write_atomic(path, second).ok();
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        reader.close();
+        writer.join();
+    }
+    EFG_CHECK(reader_opened);
+    // The snapshot is not lost because a reader had the file open for a moment.
+    EFG_CHECK(written);
+    StatusOr<std::vector<std::byte>> read = SnapshotFile::read(path);
+    EFG_REQUIRE(read.ok());
+    EFG_CHECK(read.value() == second);
 }

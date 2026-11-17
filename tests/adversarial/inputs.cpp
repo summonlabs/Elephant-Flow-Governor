@@ -155,6 +155,14 @@ EFG_TEST(framing, a_listener_reports_the_port_it_actually_bound) {
     EFG_CHECK(second.value().bound_port() != listener.value().bound_port());
 }
 
+EFG_TEST(framing, a_second_listener_cannot_take_a_listening_port) {
+    StatusOr<TcpListener> listener = TcpListener::bind_loopback(0);
+    EFG_REQUIRE(listener.ok());
+    // Two coordinators must never share one listening port: the second bind fails.
+    const StatusOr<TcpListener> second = TcpListener::bind_loopback(listener.value().bound_port());
+    EFG_CHECK(!second.ok());
+}
+
 EFG_TEST(hostile, a_cyclic_rule_graph_is_refused) {
     RuleSet rules;
     RuleNode a;
